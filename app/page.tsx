@@ -12,7 +12,6 @@ export default function Home() {
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Função para processar a imagem (escaneado leve + contraste)
   const processImage = (file: File): Promise<ArrayBuffer> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -23,21 +22,27 @@ export default function Home() {
         canvas.height = img.height;
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject('Erro ao processar imagem');
-
+  
         ctx.drawImage(img, 0, 0);
-
-        // Aplicar efeito de escaneado + contraste leve
+  
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
+  
         for (let i = 0; i < data.length; i += 4) {
-          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          const contrast = 1.1; // contraste leve
-          const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-          const c = factor * (avg - 128) + 128;
-          data[i] = data[i + 1] = data[i + 2] = Math.min(255, Math.max(0, c));
+          // Transformar para escala de cinza ponderada
+          const gray = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2];
+  
+          // Normalizar pixels para reforçar preto e clarear branco
+          // Valores abaixo de 128 ficam mais escuros, acima ficam mais claros
+          const adjusted = gray < 128
+            ? gray * 0.7      // reforça preto
+            : 255 - (255 - gray) * 0.7; // clareia branco
+  
+          data[i] = data[i + 1] = data[i + 2] = Math.min(255, Math.max(0, adjusted));
         }
+  
         ctx.putImageData(imageData, 0, 0);
-
+  
         canvas.toBlob((blob) => {
           if (!blob) return reject('Erro ao converter imagem');
           blob.arrayBuffer().then(resolve);
@@ -46,6 +51,7 @@ export default function Home() {
       img.onerror = () => reject('Erro ao carregar imagem');
     });
   };
+  
 
   const handleSelect = (): void => {
     const input = document.createElement('input');
