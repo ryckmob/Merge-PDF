@@ -11,6 +11,8 @@ export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [mergedPdfUrl, setMergedPdfUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [fileName, setFileName] = useState('');
 
   const processImage = (file: File): Promise<ArrayBuffer> => {
     return new Promise((resolve, reject) => {
@@ -109,8 +111,20 @@ export default function Home() {
       const mergedBytes = await mergedPdf.save();
       const blob = new Blob([mergedBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
+
+      // Gerar nome do arquivo: data + hora + ms + 6 dígitos aleatórios
+      const now = new Date();
+      const randomDigits = Math.floor(100000 + Math.random() * 900000);
+      const name = `merged_${now.getFullYear()}${(now.getMonth()+1)
+        .toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_` +
+        `${now.getHours().toString().padStart(2,'0')}${now.getMinutes()
+        .toString().padStart(2,'0')}${now.getSeconds()
+        .toString().padStart(2,'0')}${now.getMilliseconds()}_${randomDigits}.pdf`;
+
       setMergedPdfUrl(url);
+      setFileName(name);
       setError(null);
+      setShowModal(true); // mostra o modal após gerar
     } catch (err) {
       console.error(err);
       setError('Ocorreu um erro ao tentar juntar os arquivos');
@@ -124,8 +138,32 @@ export default function Home() {
     }
     const link = document.createElement('a');
     link.href = mergedPdfUrl;
-    link.download = 'merged.pdf';
+    link.download = fileName;
     link.click();
+  };
+
+  const handleShare = async (): Promise<void> => {
+    if (!mergedPdfUrl) return;
+
+    try {
+      const response = await fetch(mergedPdfUrl);
+      const blob = await response.blob();
+      const filesArray = [
+        new File([blob], fileName, { type: 'application/pdf' }),
+      ];
+
+      if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+        await navigator.share({
+          files: filesArray,
+          title: 'PDF Compartilhado',
+          text: 'Segue o PDF gerado',
+        });
+      } else {
+        alert('Compartilhamento não suportado neste dispositivo');
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -162,7 +200,30 @@ export default function Home() {
             )}
           </>
         ) : (
-          <DownloadMerged onDownload={handleDownload} />
+          <>
+            <DownloadMerged onDownload={handleDownload} />
+            {/* Modal de compartilhamento */}
+            {showModal && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-white p-6 rounded-xl w-80 text-center">
+                  <h2 className="text-lg font-bold mb-4">PDF pronto!</h2>
+                  <p className="mb-4">Clique no botão abaixo para compartilhar seu PDF</p>
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md mr-2"
+                    onClick={handleShare}
+                  >
+                    Compartilhar PDF
+                  </button>
+                  <button
+                    className="bg-gray-300 px-4 py-2 rounded-md"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
