@@ -14,6 +14,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [fileName, setFileName] = useState('');
 
+  // Função para aplicar efeito de scanner leve
   const processImage = (file: File): Promise<ArrayBuffer> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -24,36 +25,35 @@ export default function Home() {
         canvas.height = img.height;
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject('Erro ao processar imagem');
-  
+
         ctx.drawImage(img, 0, 0);
-  
+
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
-  
+
+        // efeito de scanner: reforçar pretos e clarear brancos
         for (let i = 0; i < data.length; i += 4) {
-          // Transformar para escala de cinza ponderada
-          const gray = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2];
-  
-          // Normalizar pixels para reforçar preto e clarear branco
-          // Valores abaixo de 128 ficam mais escuros, acima ficam mais claros
-          const adjusted = gray < 128
-            ? gray * 0.7      // reforça preto
-            : 255 - (255 - gray) * 0.7; // clareia branco
-  
-          data[i] = data[i + 1] = data[i + 2] = Math.min(255, Math.max(0, adjusted));
+          const r = data[i], g = data[i+1], b = data[i+2];
+          // convert para grayscale com leve ponderação
+          const gray = 0.3*r + 0.59*g + 0.11*b;
+
+          // efeito scanner: contraste leve
+          let val = (gray - 128) * 1.2 + 128; 
+          val = Math.max(0, Math.min(255, val));
+
+          data[i] = data[i+1] = data[i+2] = val;
         }
-  
+
         ctx.putImageData(imageData, 0, 0);
-  
+
         canvas.toBlob((blob) => {
           if (!blob) return reject('Erro ao converter imagem');
           blob.arrayBuffer().then(resolve);
-        }, file.type);
+        }, 'image/jpeg'); // converte para jpg
       };
       img.onerror = () => reject('Erro ao carregar imagem');
     });
   };
-  
 
   const handleSelect = (): void => {
     const input = document.createElement('input');
@@ -76,6 +76,13 @@ export default function Home() {
     setFiles(files.filter((f) => f !== file));
   };
 
+  const generateFileName = (): string => {
+    const now = new Date();
+    const randomDigits = Math.floor(100000 + Math.random() * 900000);
+    return `merged_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_` +
+      `${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}${now.getMilliseconds()}_${randomDigits}.pdf`;
+  };
+
   const handleMerge = async (): Promise<void> => {
     if (files.length < 1) {
       setError('Selecione pelo menos 1 arquivo');
@@ -94,10 +101,7 @@ export default function Home() {
           copiedPages.forEach((page) => mergedPdf.addPage(page));
         } else if (file.type.startsWith('image/')) {
           const processedBuffer = await processImage(file);
-          const img = file.type === 'image/png'
-            ? await mergedPdf.embedPng(processedBuffer)
-            : await mergedPdf.embedJpg(processedBuffer);
-
+          const img = await mergedPdf.embedJpg(processedBuffer);
           const page = mergedPdf.addPage([img.width, img.height]);
           page.drawImage(img, {
             x: 0,
@@ -112,19 +116,11 @@ export default function Home() {
       const blob = new Blob([mergedBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
 
-      // Gerar nome do arquivo: data + hora + ms + 6 dígitos aleatórios
-      const now = new Date();
-      const randomDigits = Math.floor(100000 + Math.random() * 900000);
-      const name = `merged_${now.getFullYear()}${(now.getMonth()+1)
-        .toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_` +
-        `${now.getHours().toString().padStart(2,'0')}${now.getMinutes()
-        .toString().padStart(2,'0')}${now.getSeconds()
-        .toString().padStart(2,'0')}${now.getMilliseconds()}_${randomDigits}.pdf`;
+      const name = generateFileName();
 
       setMergedPdfUrl(url);
       setFileName(name);
       setError(null);
-      setShowModal(true); // mostra o modal após gerar
     } catch (err) {
       console.error(err);
       setError('Ocorreu um erro ao tentar juntar os arquivos');
@@ -140,6 +136,9 @@ export default function Home() {
     link.href = mergedPdfUrl;
     link.download = fileName;
     link.click();
+
+    // após baixar, mostrar modal de compartilhar
+    setShowModal(true);
   };
 
   const handleShare = async (): Promise<void> => {
@@ -148,9 +147,7 @@ export default function Home() {
     try {
       const response = await fetch(mergedPdfUrl);
       const blob = await response.blob();
-      const filesArray = [
-        new File([blob], fileName, { type: 'application/pdf' }),
-      ];
+      const filesArray = [new File([blob], fileName, { type: 'application/pdf' })];
 
       if (navigator.canShare && navigator.canShare({ files: filesArray })) {
         await navigator.share({
@@ -202,12 +199,12 @@ export default function Home() {
         ) : (
           <>
             <DownloadMerged onDownload={handleDownload} />
-            {/* Modal de compartilhamento */}
+
             {showModal && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                 <div className="bg-white p-6 rounded-xl w-80 text-center">
                   <h2 className="text-lg font-bold mb-4">PDF pronto!</h2>
-                  <p className="mb-4">Clique no botão abaixo para compartilhar seu PDF</p>
+                  <p className="mb-4">Seu PDF foi baixado com sucesso! Clique abaixo para compartilhar:</p>
                   <button
                     className="bg-blue-600 text-white px-4 py-2 rounded-md mr-2"
                     onClick={handleShare}
