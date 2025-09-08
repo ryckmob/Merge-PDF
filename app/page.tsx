@@ -14,6 +14,19 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [fileName, setFileName] = useState('');
 
+  const fullText = "Adicione imagens ou PDF para juntar"
+  const [displayed, setDisplayed] = useState("")
+  const [index, setIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayed(fullText.slice(0, index))
+      setIndex((prev) => (prev < fullText.length ? prev + 1 : 0))
+    }, 120) // velocidade da digitação
+
+    return () => clearInterval(interval)
+  }, [index, fullText])
+
   // Função para aplicar efeito de scanner leve
   const processImage = (file: File): Promise<ArrayBuffer> => {
     return new Promise((resolve, reject) => {
@@ -174,8 +187,13 @@ export default function Home() {
 
         {!mergedPdfUrl ? (
           <>
-            <p className="text-center text-gray-600 mb-4 overflow-hidden whitespace-nowrap border-r-2 border-gray-600 animate-typing">
-              Adicione imagens ou PDF para juntar
+            <p
+              className="text-center text-gray-600 mb-4 select-none pointer-events-none font-medium"
+            >
+              {displayed}
+              {index < fullText.length ? (
+                <span className="animate-pulse">...</span>
+              ) : null}
             </p>
 
             <DropArea onSelect={handleSelect} />
