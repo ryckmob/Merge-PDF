@@ -161,7 +161,9 @@ export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-6">Juntar PDF by Luiz Henrique</h1>
+        <a href="http://wa.me/+5586994059642">
+          <h1 className="text-2xl font-bold text-center mb-6">Juntar PDF by Luiz Henrique</h1>
+        </a>
 
         {error && (
           <div className="mb-4 flex items-center justify-center gap-2 bg-yellow-100 text-yellow-800 text-sm rounded-md p-2">
