@@ -174,7 +174,10 @@ export default function Home() {
 
         {!mergedPdfUrl ? (
           <>
-            <p className="text-center text-gray-600 mb-4">Add PDF files or Images</p>
+            <p className="text-center text-gray-600 mb-4 overflow-hidden whitespace-nowrap border-r-2 border-gray-600 animate-typing">
+              Adicione imagens ou PDF para juntar
+            </p>
+
             <DropArea onSelect={handleSelect} />
 
             <div className="mt-4 flex flex-col gap-3">
