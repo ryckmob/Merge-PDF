@@ -27,40 +27,29 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [index, fullText])
 
-  // Função para aplicar efeito de scanner leve
-  const processImage = (file: File): Promise<ArrayBuffer> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return reject('Erro ao processar imagem');
-  
-        ctx.drawImage(img, 0, 0);
-  
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-  
-        // Apenas clarear levemente: aumentar luminosidade 10%
-        for (let i = 0; i < data.length; i += 4) {
-          data[i] = Math.min(255, data[i] * 1.1);     // R
-          data[i+1] = Math.min(255, data[i+1] * 1.1); // G
-          data[i+2] = Math.min(255, data[i+2] * 1.1); // B
-        }
-  
-        ctx.putImageData(imageData, 0, 0);
-  
-        canvas.toBlob((blob) => {
-          if (!blob) return reject('Erro ao converter imagem');
-          blob.arrayBuffer().then(resolve);
-        }, 'image/jpeg'); // sempre converte para jpg
-      };
-      img.onerror = () => reject('Erro ao carregar imagem');
-    });
-  };
+  // Função para apenas converter imagem em ArrayBuffer sem filtro
+const processImage = (file: File): Promise<ArrayBuffer> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject('Erro ao processar imagem');
+
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob((blob) => {
+        if (!blob) return reject('Erro ao converter imagem');
+        blob.arrayBuffer().then(resolve);
+      }, 'image/jpeg');
+    };
+    img.onerror = () => reject('Erro ao carregar imagem');
+  });
+};
+
   
 
   const handleSelect = (): void => {
