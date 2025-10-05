@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,21 +17,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://merge-pdf-alpha.vercel.app/',
   },
-  openGraph: {
-    siteName: 'Juntar PDF - Ferramentas online para PDF',
-    title: 'Combine arquivos PDF online. O serviço é gratuito para mesclar PDF',
-    description:
-      'Selecione vários arquivos PDF e combine-os em segundos. Mescle e combine arquivos PDF online, fácil e gratuito.',
-    type: 'website',
-    locale: 'pt_BR',
-    url: 'https://merge-pdf-alpha.vercel.app/',
-  },
-  twitter: {
-    card: 'summary',
-    title: 'Combine arquivos PDF online. O serviço é gratuito para mesclar PDF',
-    description:
-      'Selecione vários arquivos PDF e combine-os em segundos. Mescle e combine arquivos PDF online, fácil e gratuito.',
-  },
 };
 
 export default function RootLayout({
@@ -40,6 +26,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
+      <head>
+        {/* Google Analytics */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-JRDYN8ZW4G"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-JRDYN8ZW4G', { page_path: window.location.pathname });
+          `}
+        </Script>
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );
