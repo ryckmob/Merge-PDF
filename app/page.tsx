@@ -14,7 +14,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [fileName, setFileName] = useState('');
 
-  const fullText = "Adicione imagens ou PDF para juntar"
+  const fullText = "Adicione imagens ou PDF's para juntar"
   const [displayed, setDisplayed] = useState("")
   const [index, setIndex] = useState(0)
 
@@ -174,9 +174,8 @@ export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm">
-        <a href="http://wa.me/+5586994059642">
-          <h1 className="text-2xl font-bold text-center mb-6">Juntar PDF by Luiz Henrique</h1>
-        </a>
+        <h1 className="text-2xl font-bold text-center mb-6">Juntar PDF</h1>
+        
 
         {error && (
           <div className="mb-4 flex items-center justify-center gap-2 bg-yellow-100 text-yellow-800 text-sm rounded-md p-2">
@@ -188,12 +187,9 @@ export default function Home() {
         {!mergedPdfUrl ? (
           <>
             <p
-              className="text-center text-gray-600 mb-4 select-none pointer-events-none font-medium"
+              className="text-center text-gray-600 mb-4 font-medium"
             >
-              {displayed}
-              {index < fullText.length ? (
-                <span className="animate-pulse">...</span>
-              ) : null}
+              {fullText}
             </p>
 
             <DropArea onSelect={handleSelect} />

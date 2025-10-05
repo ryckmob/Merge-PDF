@@ -12,7 +12,7 @@ export default function DropArea({ onSelect }: DropAreaProps) {
       <div className="bg-red-500 text-white w-14 h-14 flex items-center justify-center rounded-md font-bold mb-3">
         PDF
       </div>
-      <p className="text-gray-600 font-medium">Select files</p>
+      <p className="text-gray-600 font-medium">Selecione os arquivos</p>
     </div>
   );
 }
